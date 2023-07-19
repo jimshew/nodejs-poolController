@@ -322,6 +322,15 @@ export class Inbound extends Message {
         //return ndx < bytes.length - 3 && bytes[ndx] === 255 && bytes[ndx + 1] === 0 && bytes[ndx + 2] === 255 && bytes[ndx + 3] === 165;
         return false;
     }
+    private testBroadcastHeaderCompool(bytes: number[], ndx: number): boolean {
+        // We are looking for [255, 170 ]
+	if (bytes.length > ndx + 3) {
+            if (bytes[ndx] === 255 && bytes[ndx + 1] === 170) return true;
+            return false; 
+	}
+	return false;
+
+    }	    
     private testUnidentifiedHeader(bytes: number[], ndx: number): boolean {
         if (bytes.length > ndx + 3) {
             if (bytes[ndx] === 255 && bytes[ndx + 1] === 0 && bytes[ndx + 2] === 255 && bytes[ndx + 3] !== 165) return true;
@@ -392,7 +401,11 @@ export class Inbound extends Message {
         // the header process even after it had identified it.
         if (this.protocol === Protocol.Unknown) {
             while (ndx < bytes.length) {
-                if (this.testBroadcastHeader(bytes, ndx)) {
+                if (this.testBroadcastHeaderCompool(bytes, ndx)) {
+                    this.protocol = Protocol.Broadcast;
+		    break;
+		}
+		if (this.testBroadcastHeader(bytes, ndx)) {
                     this.protocol = Protocol.Broadcast;
                     break;
                 }
